@@ -1,0 +1,67 @@
+general:
+  verbose: true
+  buildTool: 'maven'
+  gitSshUrl: git@github.com:zhangyaya/cloud-bulletinboard-ads.git
+  gitSshKeyCredentialsId: ZhangyayaSSHGithub
+  influxDBServer: jenkins
+  xMakeBuildQuality: Milestone
+  xMakeDevCredentialsId: xmakeNova
+  manualConfirmation: false
+  productiveBranch: 'master'
+
+steps:
+  cloudFoundryDeploy:
+    cfCredentialsId: CF_CREDENTIAL
+    deployType: 'standard'
+    deployTool: 'mtaDeployPlugin'
+
+  setVersion:
+    buildTool: 'maven'
+    filePath: pom.xml
+
+  executeBuild:
+    xMakeShipmentType: indirectshipment
+    xMakeNovaCredentialsId: 'xmakeNova'
+    #xMakeNovaCredentialsId: 'xmakeNova_Kane'
+
+  checksPublishResults:
+    checkstyle:
+      pattern: '**/target/checkstyle-result.xml'
+      archive: true
+      active: true
+      thresholds:
+        fail:
+          high: '0'
+
+  testsPublishResults:
+    junit:
+      pattern: '**/target/surefire-reports/TEST*.xml'
+      active: true
+      archive: true
+    cobertura:
+      pattern: '**/target/coverage/cobertura-coverage.xml'
+      archive: true
+      active: true
+    jacoco:
+      pattern: "**/target/*.exec"
+      active: true
+      archive: true
+      sources: "**/src/main/java"
+      classes: "**/classes"
+
+stages:
+
+  Central Build:
+    executeSonarScan: false
+
+  Deploy to Dev:
+    cloudFoundryDeploy: true
+    downloadArtifactsFromNexus: true
+    cfOrg: I513657trial_trial
+    cfSpace: Dev
+    cfApiEndpoint: https://api.cf.eu10.hana.ondemand.com
+    #testServerUrl: 'https://account.int.sap.eu2.hana.ondemand.com'
+    # newmanCollection: resources/postman/test.postman_collection.json
+    newmanExecute: false
+    jacoco:
+      active: false
